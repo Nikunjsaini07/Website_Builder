@@ -6,7 +6,7 @@ import 'dotenv/config'
 const trustedOrigins = process.env.Trusted_url?.split(',') || [] ; 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
-        provider: "postgresql", // or "mysql", "postgresql", ...etc
+        provider: "postgresql", 
     }),
     emailAndPassword: { 
     enabled: true, 
