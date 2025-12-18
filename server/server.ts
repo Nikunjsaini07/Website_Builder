@@ -13,6 +13,8 @@ const corsOptions = {
 app.use(cors(corsOptions))
 app.all('/api/auth/{*any}', toNodeHandler(auth
 
+
+
     
 ));
 
