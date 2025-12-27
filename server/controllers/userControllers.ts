@@ -23,3 +23,64 @@ export const getUserCredits = async (req : Request , res : Response ) => {
 
     }
 }
+export const createUserProject = async (req : Request , res : Response ) => {
+    const userId = req.userId;
+    try {
+        const {initial_prompt} = req.body ;
+        
+        if(!userId){
+            return res.status(401).json({
+                message : 'Unauthorised'
+            });
+        }
+        const user = await prisma.user.findUnique({
+            where : {
+                id : userId
+            }
+        })
+        if(user && user.credits < 5 ){
+            return res.status(403).json({
+                message : 'add credits to create more projects'
+            });
+        }
+        const project = await prisma.websiteProject.create({
+            data : {
+                name : initial_prompt.length > 50 ? initial_prompt.substring(0,45 ) + '... '  : initial_prompt, 
+                initial_prompt , 
+                userId
+            }
+        })
+
+        await prisma.user.update({
+            where : {id : userId}, 
+            data : {totalCreation : {increment : 1 }}
+        })
+
+        await prisma.conversation.create({
+            data : {
+                role : 'user' , 
+                content : initial_prompt , 
+                projectId : project.id
+            }
+        })
+        
+
+        await prisma.user.update({
+            where :{id : userId},
+            data : {credits : {decrement : 5 }}
+        })
+
+        res.json({
+            projectId : project.id
+        })
+
+        
+
+    }
+    catch (error : any ){
+        return res.status(401).json({
+            message : error.message 
+        });
+
+    }
+}
