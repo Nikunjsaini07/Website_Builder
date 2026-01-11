@@ -24,6 +24,7 @@ export const getUserCredits = async (req : Request , res : Response ) => {
 
     }
 }
+
 export const createUserProject = async (req : Request , res : Response ) => {
     const userId = req.userId;
     try {
@@ -184,6 +185,104 @@ export const createUserProject = async (req : Request , res : Response ) => {
                 credits : {increment : 5 }
             }
         })
+        return res.status(401).json({
+            message : error.message 
+        });
+
+    }
+}
+
+export const getUserProject = async (req : Request , res : Response ) => {
+    try {
+        const userId = req.userId;
+        if(!userId){
+            return res.status(401).json({
+                message : 'Unauthorised'
+            });
+        }
+        const{projectId} = req.params;
+        const project = await prisma.websiteProject.findUnique({
+            where : {id : projectId , userId}, 
+            include : {
+                conversation : {
+                    orderBy : {timestamp : 'asc'}
+                } , 
+                versions : {
+                    orderBy : {timestamp : 'asc'}
+                }
+            }
+        })
+
+        const user = await prisma.user.findUnique({
+            where : {
+                id : userId
+            }
+        })
+        res.json({project})
+    }
+    catch (error : any ){
+        return res.status(401).json({
+            message : error.message 
+        });
+
+    }
+}
+export const getUserProjects = async (req : Request , res : Response ) => {
+    try {
+        const userId = req.userId;
+        if(!userId){
+            return res.status(401).json({
+                message : 'Unauthorised'
+            });
+        }
+       
+        const projects = await prisma.websiteProject.findMany({
+            where : {userId}, 
+            orderBy : {updatedAt : 'desc'}
+        })
+
+        const user = await prisma.user.findUnique({
+            where : {
+                id : userId
+            }
+        })
+        res.json({project})
+    }
+    catch (error : any ){
+        return res.status(401).json({
+            message : error.message 
+        });
+
+    }
+}
+export const togglePublish = async (req : Request , res : Response ) => {
+    try {
+        const userId = req.userId;
+        if(!userId){
+            return res.status(401).json({
+                message : 'Unauthorised'
+            });
+        }
+       
+        const{projectId} = req.params;
+        const project = await prisma.websiteProject.findUnique({
+            where : {id : projectId, userId}
+        })
+
+        if(!project) {
+            return res.status(404).json({
+                message : 'project not found'
+            });
+        }
+
+        const user = await prisma.user.findUnique({
+            where : {
+                id : userId
+            }
+        })
+        res.json({project})
+    }
+    catch (error : any ){
         return res.status(401).json({
             message : error.message 
         });
