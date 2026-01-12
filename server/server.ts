@@ -4,6 +4,7 @@ import 'dotenv/config'
 import cors from 'cors'
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth.js';
+import userRouter from './routes/userRoutes.js';
 const app = express();
 const corsOptions = {
     origin : process.env.Trusted_url?.split(',') || [] , 
@@ -11,18 +12,14 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions))
-app.all('/api/auth/{*any}', toNodeHandler(auth
-
-
-
-    
-));
-
+app.all('/api/auth/{*any}', toNodeHandler(auth));
+app.use(express.json({limit :'50mb'}))
 const port = 3000;
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Server is Live!');
 });
+app.use('/api/user' , userRouter);
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
