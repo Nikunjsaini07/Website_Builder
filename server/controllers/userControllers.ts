@@ -246,7 +246,7 @@ export const getUserProjects = async (req : Request , res : Response ) => {
                 id : userId
             }
         })
-        res.json({project})
+        res.json({projects})
     }
     catch (error : any ){
         return res.status(401).json({
@@ -275,12 +275,15 @@ export const togglePublish = async (req : Request , res : Response ) => {
             });
         }
 
-        const user = await prisma.user.findUnique({
-            where : {
-                id : userId
+        await prisma.websiteProject.update({
+            where : {id : projectId},
+            data : {
+                isPublished : !project.isPublished
             }
         })
-        res.json({project})
+
+        
+        res.json({message : project.isPublished ? 'Project Published' : 'Project is not published '})
     }
     catch (error : any ){
         return res.status(401).json({
