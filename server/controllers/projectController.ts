@@ -176,3 +176,35 @@ export const makeRevision = async (req : Request , res : Response ) => {
 
     }
 }
+
+
+export const rollbackToVersion= async (req : Request , res : Response ) => {
+    try{
+        const userId = req.userId
+        if(!userId){
+        return res.status(401).json({
+        message: 'Unauthorised'
+        });
+        }   
+        const {projectId , versionId} = req.params;
+
+        const project = await prisma.websiteProject.findUnique({
+            where : {id : projectId , userId} , 
+            include : {versions : true }
+        })
+
+        if(!project){
+            return res.status(404).json({
+                message : 'Unauthorized'
+            })
+        }
+
+          
+    }
+    catch(error){
+         
+    }
+    
+}
+
+
