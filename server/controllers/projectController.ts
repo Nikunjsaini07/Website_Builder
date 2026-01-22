@@ -3,9 +3,9 @@ import prisma from "../lib/prisma.js";
 import openai from "../config/openai.js";
 
 export const makeRevision = async (req : Request , res : Response ) => {
-    
+    const userId = req.userId;
     try {
-        const userId = req.userId;
+        
         const {projectId} = req.params;
         const {message} = req.body ;
         
@@ -90,10 +90,87 @@ export const makeRevision = async (req : Request , res : Response ) => {
                  projectId
             }
         })
-        res.json({credits : user?.credits})
+        
+        const codeGenerationResponse = await openai.chat.completions.create({
+            model :'z-ai/glm-4.5-air:free',
+            messages : [
+                {
+                    role: 'system',
+                    content : `You are an expert web developer. Create a complete, production-ready, single-page website based on this request: "${enchancedPrompt}"
+
+                            CRITICAL REQUIREMENTS:
+                            - You MUST output valid HTML ONLY. 
+                            - Use Tailwind CSS for ALL styling
+                            - Include this EXACT script in the <head>: <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+                            - Use Tailwind utility classes extensively for styling, animations, and responsiveness
+                            - Make it fully functional and interactive with JavaScript in <script> tag before closing </body>
+                            - Use modern, beautiful design with great UX using Tailwind classes
+                            - Make it responsive using Tailwind responsive classes (sm:, md:, lg:, xl:)
+                            - Use Tailwind animations and transitions (animate-*, transition-*)
+                            - Include all necessary meta tags
+                            - Use Google Fonts CDN if needed for custom fonts
+                            - Use placeholder images from https://placehold.co/600x400
+                            - Use Tailwind gradient classes for beautiful backgrounds
+                            - Make sure all buttons, cards, and components use Tailwind styling
+
+                            CRITICAL HARD RULES:
+                            1. You MUST put ALL output ONLY into message.content.
+                            2. You MUST NOT place anything in "reasoning", "analysis", "reasoning_details", or any hidden fields.
+                            3. You MUST NOT include internal thoughts, explanations, analysis, comments, or markdown.
+                            4. Do NOT include markdown, explanations, notes, or code fences.
+
+                            The HTML should be complete and ready to render as-is with Tailwind CSS.
+                        `
+                },
+                {
+                    role : 'user' , 
+                    content : `Here is the current website code : " ${currentProject.current_code} " 
+                    The user wants this change : "${enchancedPrompt}"`
+
+                }
+            ]
+        })
+
+        const code = codeGenerationResponse.choices[0].message.content || '';
+
+        const version = await prisma.version.create({
+            data : {
+                code : code.replace(/```[a-z]*\n?/gi , '')
+                    .replace(/```$/g , '' )
+                    .trim(),
+                    description : 'Chanages made ' , 
+                    projectId
+            }
+        })
+       
+        await prisma.conversation.create({
+             data :{
+                 role : 'assistant' , 
+                 content : "I'have made the chnages to your website ! You can now prevew it",
+                 projectId
+             }
+        })
+        await prisma.websiteProject.update({
+            where : {id : projectId},
+            data : {
+                current_code : code.replace(/```[a-z]*\n?/gi , '')
+                    .replace(/```$/g , '' )
+                    .trim(),
+                    current_version_index : version.id
+            }
+        })
+        
+
+        res.json({message : "Changes made successfully"})
     }
     catch (error : any ){
-        return res.status(401).json({
+         await prisma.user.update({
+            where : {id : userId},
+            data : {
+                credits : {increment : 5}
+            }
+        })
+        return res.status(500).json({
             message : error.message 
         });
 
