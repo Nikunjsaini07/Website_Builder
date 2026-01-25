@@ -177,7 +177,6 @@ export const makeRevision = async (req : Request , res : Response ) => {
     }
 }
 
-
 export const rollbackToVersion= async (req : Request , res : Response ) => {
     try{
         const userId = req.userId
@@ -240,5 +239,30 @@ export const rollbackToVersion= async (req : Request , res : Response ) => {
     }
     
 }
+
+export const deleteProject = async (req : Request , res : Response ) => {
+    try{
+        const userId = req.userId 
+        const {projectId , versionId} = req.params;
+
+        await prisma.websiteProject.delete({
+             where : {id : projectId , userId}
+            
+        })
+        res.json({
+        message : 'Project deleted successfully'
+        });
+     
+    }
+    catch(error : any){
+         res.status(500).json({
+             message : error.message
+         });
+    }
+    
+}
+
+
+
 
 
