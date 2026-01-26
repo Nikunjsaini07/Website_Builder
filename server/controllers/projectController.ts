@@ -316,6 +316,33 @@ export const getPublishedProject = async (req : Request , res : Response ) => {
     
 }
 
+export const getProjectById = async (req : Request , res : Response ) => {
+    try{
+        
+        const {projectId , versionId} = req.params;
+        
+
+        const project = await prisma.websiteProject.findFirst({
+             where : {id : projectId },          
+        })
+         
+        if(!project || !project.isPublished ||!project?.current_code){
+             return res.status(404).json({
+                message : 'Project not found'
+             });
+        }
+        res.json({
+            code : project.current_code
+        });
+     
+    }
+    catch(error : any){
+         res.status(500).json({
+             message : error.message
+         });
+    }
+    
+}
 
 
 
